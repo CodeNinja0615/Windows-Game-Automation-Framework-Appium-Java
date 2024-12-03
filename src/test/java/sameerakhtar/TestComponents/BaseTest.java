@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -16,55 +15,53 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
-
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.android.options.UiAutomator2Options;
 import io.appium.java_client.service.local.AppiumDriverLocalService;
 import io.appium.java_client.service.local.AppiumServiceBuilder;
 import io.appium.java_client.windows.WindowsDriver;
-import sameerakhtar.pageobject.LaunchGameWithPackageName;
+import io.appium.java_client.windows.options.WindowsOptions;
 
 public class BaseTest {
 
 	public AppiumDriverLocalService service;
-	public AndroidDriver driver;
-	public WindowsDriver winDriver;
-	public LaunchGameWithPackageName launchGameWithPackageName;
+	public WindowsDriver driver;
 
-	public void configureAppiumMobile(String deviceName, String platformName, boolean setNoReset)
+	public void startServiceBuilder() {
+		String currentUser = System.getProperty("user.name");
+		service = new AppiumServiceBuilder()
+				.withAppiumJS(new File("C://Users//" + currentUser
+						+ "//AppData//Roaming//npm//node_modules//appium//build//lib//main.js"))
+				.withIPAddress("127.0.0.1").usingPort(4723).build();
+		service.start();
+	}
+
+	public void configureAppiumWindows(String deviceName, String platformName, String appToLaunch)
 			throws MalformedURLException, URISyntaxException {
-
-		if (platformName.equalsIgnoreCase("Android")) {
-			// ---Android code here
-			String currentUser = System.getProperty("user.name");
-			service = new AppiumServiceBuilder()
-					.withAppiumJS(new File("C://Users//" + currentUser
-							+ "//AppData//Roaming//npm//node_modules//appium//build//lib//main.js"))
-					.withIPAddress("127.0.0.1").usingPort(4723).build();
-			service.start();
-			UiAutomator2Options options = new UiAutomator2Options();
-			options.setDeviceName(deviceName);
-			options.setPlatformName(platformName);
-			// -----------------------------------------------------------------------------------------------------------------------//
-//			options.setApp("C:/Users/HP/Downloads/General-Store.apk");
-//			adb shell dumpsys window | findstr "mCurrentFocus"
-//			options.setAppActivity("com.instagram.barcelona.mainactivity.BarcelonaActivity");
-//			options.setAppPackage("com.instagram.barcelona");
-			// -----------------------------------------------------------------------------------------------------------------------//
-			options.setNoReset(setNoReset); // ----- set true else app will be reset on start
-			options.setAppWaitForLaunch(true);
-			options.setGpsEnabled(true);
-			options.autoGrantPermissions();
-			driver = new AndroidDriver(new URI("http://127.0.0.1:4723").toURL(), options);
-			driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-			driver.unlockDevice();
-		} else if (platformName.equalsIgnoreCase("iOS")) {
-			// ---iOS code here
+		if (platformName.equalsIgnoreCase("Windows")) {
+			// ---Windows code here
+			WindowsOptions options = new WindowsOptions();
+			options.setCapability("deviceName", deviceName);
+			options.setCapability("platformName", platformName);
+			// ----CMD---- // Get-StartApps
+			options.setCapability("app", appToLaunch);
+			driver = new WindowsDriver(new URI("http://127.0.0.1:4723").toURL(), options);
+		} else if (platformName.equalsIgnoreCase("Mac")) {
+			// ---Mac code here
 		}
+	}
+
+	public void launchApplicationWindows(String appToLaunch) throws MalformedURLException, URISyntaxException {
+		// ---Windows code here
+		WindowsOptions options = new WindowsOptions();
+		options.setCapability("deviceName", "WindowsPC");
+		options.setCapability("platformName", "Windows");
+		// ----CMD---- // Get-StartApps
+		options.setCapability("app", appToLaunch);
+		driver = new WindowsDriver(new URI("http://127.0.0.1:4723").toURL(), options);
 	}
 
 	@BeforeMethod
 	public void setup() throws URISyntaxException, IOException {
+		startServiceBuilder();
 		Properties prop = new Properties();
 		FileInputStream fis = new FileInputStream(
 				System.getProperty("user.dir") + "//src//main//java//sameerakhtar//resources//GlobalData.properties");
@@ -73,11 +70,7 @@ public class BaseTest {
 				: prop.getProperty("deviceName");
 		String platformName = System.getProperty("platformName") != null ? System.getProperty("platformName")
 				: prop.getProperty("platformName");
-
-		configureAppiumMobile(deviceName, platformName, true);
-		launchGameWithPackageName = new LaunchGameWithPackageName(driver); // ----Providing driver to the first page
-																			// object model class
-
+		configureAppiumWindows(deviceName, platformName, "Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App");
 	}
 
 	@AfterMethod

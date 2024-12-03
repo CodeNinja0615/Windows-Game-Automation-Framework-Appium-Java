@@ -1,22 +1,22 @@
 package sameerakhtar.AbstractComponents;
 
+import java.awt.AWTException;
 import java.awt.Point;
+import java.awt.Robot;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-
+import java.time.Duration;
 import javax.imageio.ImageIO;
-
-import org.openqa.selenium.DeviceRotation;
-import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.interactions.Actions;
-
-import com.google.common.collect.ImmutableMap;
-
-import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.windows.WindowsDriver;
 
 //--https://github.com/appium/appium-uiautomator2-driver/blob/master/docs/android-mobile-gestures.md
 public class AbstractComponent {
@@ -30,32 +30,24 @@ public class AbstractComponent {
 	public static final String PURPLE = "\u001B[35m";
 	public static final String CYAN = "\u001B[36m";
 	public static final String WHITE = "\u001B[37m";
-	AndroidDriver driver;
+	WindowsDriver driver;
 
-	public AbstractComponent(AndroidDriver driver) {
+	public AbstractComponent(WindowsDriver driver) {
 		this.driver = driver;
 	}
 
-	public void launchGameWithPackageName(String packageName) {
-		driver.terminateApp(packageName);
-		driver.activateApp(packageName);
-	}
-
-	public void quitGameWithPackageName(String packageName) {
-		driver.terminateApp(packageName);
-	}
-
-	public void deviceRotation() {
-		DeviceRotation rotate = new DeviceRotation(0, 0, 90);
-		driver.rotate(rotate);
-	}
-
 	public void copyToClipboard(String text) {
-		driver.setClipboardText(text);
+		StringSelection stringSelection = new StringSelection(text); // Wrap the text
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard(); // Get the system clipboard
+		clipboard.setContents(stringSelection, null); // Set the clipboard content
 	}
 
-	public String getClipboardText(String text) {
-		return driver.getClipboardText();
+	public void pasteClipboardText() throws AWTException {
+		Robot action = new Robot();
+		action.keyPress(KeyEvent.CTRL_DOWN_MASK);
+		action.keyPress(KeyEvent.VK_V);
+		action.keyRelease(KeyEvent.VK_V);
+		action.keyRelease(KeyEvent.CTRL_DOWN_MASK);
 	}
 
 	public Point VerifyScreenPatternAndGetCoordinates(String imageName, int timeInSeconds) throws Exception {
@@ -152,10 +144,8 @@ public class AbstractComponent {
 //		tap.addAction(finger.createPointerUp(PointerInput.MouseButton.LEFT.asArg()));
 //		driver.perform(Collections.singletonList(tap));
 
-//		new Actions(driver).moveToLocation(x, y).click().build().perform();
+		new Actions(driver).moveToLocation(x, y).click().build().perform();
 
-		// Java
-		driver.executeScript("mobile: clickGesture", ImmutableMap.of("x", x, "y", y));
 		System.out.println(GREEN + "Clicked at x:" + x + ", y:" + y + RESET);
 	}
 
@@ -165,52 +155,9 @@ public class AbstractComponent {
 	}
 
 	public void clickAndHoldOnScreenWithCoordinates(int x, int y, int time) {
-//		new Actions(driver).moveToLocation(x, y).clickAndHold().pause(Duration.ofSeconds(time)).release().build()
-//				.perform();
-
-		((JavascriptExecutor) driver).executeScript("mobile: longClickGesture",
-				ImmutableMap.of("x", x, "y", y, "duration", time * 1000));
+		new Actions(driver).moveToLocation(x, y).clickAndHold().pause(Duration.ofSeconds(time)).release().build()
+				.perform();
 		System.out.println(GREEN + "Clicked at x:" + x + ", y:" + y + RESET);
-	}
-
-	public void scrollInAreaWithCoordinates(int x, int y, int width, int height, String direction, double scrollPercent)
-			throws Exception {
-		((JavascriptExecutor) driver).executeScript("mobile: scrollGesture", ImmutableMap.of("left", x, "top", y,
-				"width", width, "height", height, "direction", direction, "percent", scrollPercent, "speed", 500));
-
-	}
-
-	public void lookForScreenContentAndScrollInAreaWithCoordinates(int x, int y, int width, int height,
-			String direction, double scrollPercent, String lookingFor) throws Exception {
-		boolean canScrollMore = (Boolean) ((JavascriptExecutor) driver).executeScript("mobile: scrollGesture",
-				ImmutableMap.of("left", x, "top", y, "width", width, "height", height, "direction", direction,
-						"percent", scrollPercent, "speed", 500));
-		boolean verifyLookingFor = VerifyScreenPattern(lookingFor, 2);
-		int count = 0;
-		while (!verifyLookingFor && count <= 20 && !canScrollMore) {
-			canScrollMore = (Boolean) ((JavascriptExecutor) driver).executeScript("mobile: scrollGesture",
-					ImmutableMap.of("left", x, "top", y, "width", width, "height", height, "direction", direction,
-							"percent", scrollPercent, "speed", 500));
-			verifyLookingFor = VerifyScreenPattern(lookingFor, 2);
-			count++;
-		}
-
-	}
-
-	public void swipeInDirectionInAreaWithCoordinates(int x, int y, int width, int height, String direction,
-			double swipePercent) {
-		((JavascriptExecutor) driver).executeScript("mobile: swipeGesture", ImmutableMap.of("left", x, "top", y,
-				"width", width, "height", height, "direction", direction, "percent", swipePercent));
-	}
-
-	public void zoomInAreaWithCoordinates(int x, int y, int width, int height, double zoomInPercent) {
-		((JavascriptExecutor) driver).executeScript("mobile: pinchOpenGesture",
-				ImmutableMap.of("left", x, "top", y, "width", width, "height", height, "percent", zoomInPercent));
-	}
-
-	public void zoomOutAreaWithCoordinates(int x, int y, int width, int height, double zoomOutPercent) {
-		((JavascriptExecutor) driver).executeScript("mobile: pinchCloseGesture",
-				ImmutableMap.of("left", x, "top", y, "width", width, "height", height, "percent", zoomOutPercent));
 	}
 
 	public void sendKeyboardInput(CharSequence... input) {
