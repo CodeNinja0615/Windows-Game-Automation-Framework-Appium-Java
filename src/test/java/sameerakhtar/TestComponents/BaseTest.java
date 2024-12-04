@@ -70,7 +70,8 @@ public class BaseTest {
 				: prop.getProperty("deviceName");
 		String platformName = System.getProperty("platformName") != null ? System.getProperty("platformName")
 				: prop.getProperty("platformName");
-		configureAppiumWindows(deviceName, platformName, "Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App");
+//		configureAppiumWindows(deviceName, platformName, "Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App");
+		configureAppiumWindows(deviceName, platformName, "Root");
 	}
 
 	@AfterMethod
